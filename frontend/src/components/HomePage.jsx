@@ -60,6 +60,26 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll }) {
     return () => { cancelled = true; };
   }, [channels, refreshTrigger, fetchChannel, language]);
 
+  function parseRelativeDate(str) {
+    if (!str) return 0;
+    const now = Date.now();
+    const lower = str.toLowerCase();
+    const match = lower.match(/(\d+)\s*(second|minute|hour|day|week|month|year)s?\s*ago/);
+    if (!match) return now;
+    const num = parseInt(match[1], 10);
+    const unit = match[2];
+    const ms = {
+      second: 1000,
+      minute: 60000,
+      hour: 3600000,
+      day: 86400000,
+      week: 604800000,
+      month: 2592000000,
+      year: 31536000000,
+    }[unit] || 0;
+    return now - num * ms;
+  }
+
   const allPosts = [];
   Object.entries(channelData).forEach(([channel, data]) => {
     if (data && data.posts) {
@@ -75,11 +95,8 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll }) {
   });
 
   allPosts.sort((a, b) => {
-    const dateA = new Date(a.date);
-    const dateB = new Date(b.date);
-    if (isNaN(dateA) && isNaN(dateB)) return 0;
-    if (isNaN(dateA)) return 1;
-    if (isNaN(dateB)) return -1;
+    const dateA = parseRelativeDate(a.date);
+    const dateB = parseRelativeDate(b.date);
     return dateB - dateA;
   });
 
