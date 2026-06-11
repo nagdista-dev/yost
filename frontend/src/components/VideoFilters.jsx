@@ -53,7 +53,7 @@ export default function VideoFilters({
 
         <button
           onClick={() => setLiveFilter(!liveFilter)}
-          className={`p-1 md:p-1.5 rounded-lg transition flex items-center gap-1 md:gap-1.5 text-xs font-medium ${
+          className={`hidden md:inline-flex p-1.5 rounded-lg transition items-center gap-1.5 text-xs font-medium ${
             liveFilter
               ? 'bg-red-500/15 text-red-500 border border-red-500/30'
               : 'text-yt-text-secondary hover:text-yt-text border border-transparent'
@@ -61,7 +61,7 @@ export default function VideoFilters({
           title="Live"
         >
           <Radio size={12} className={liveFilter ? 'animate-pulse' : ''} />
-          <span className="hidden md:inline">Live</span>
+          <span>Live</span>
         </button>
 
         <div className="flex items-center gap-1 bg-yt-bg-tertiary/50 rounded-lg p-0.5 border border-yt-border/40">
@@ -86,9 +86,9 @@ export default function VideoFilters({
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
+      <div className="hidden md:flex items-center gap-2 flex-wrap">
         {categoryFilter && (
-          <span className="inline-flex items-center gap-1.5 px-2 md:px-2.5 py-0.5 md:py-1 rounded-lg bg-yt-accent/10 text-yt-accent text-xs font-medium">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-yt-accent/10 text-yt-accent text-xs font-medium">
             {categoryFilter === 'Unspecified' ? t(language, 'unspecified') : categoryFilter}
             <button
               onClick={() => setCategoryFilter(null)}
@@ -101,7 +101,7 @@ export default function VideoFilters({
         {(categoryFilter || liveFilter) && onClearFilters && (
           <button
             onClick={onClearFilters}
-            className="px-2 md:px-2.5 py-0.5 md:py-1 rounded-lg text-xs font-medium text-yt-text-muted hover:text-yt-text hover:bg-yt-bg-tertiary/50 border border-yt-border/30 transition"
+            className="px-2.5 py-1 rounded-lg text-xs font-medium text-yt-text-muted hover:text-yt-text hover:bg-yt-bg-tertiary/50 border border-yt-border/30 transition"
           >
             {t(language, 'clearFilters')}
           </button>
