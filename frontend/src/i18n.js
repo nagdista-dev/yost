@@ -148,6 +148,7 @@ const translations = {
     markAllUnwatched: 'Mark all unwatched',
     playlistAdded: (name) => `Added "${name}"`,
     playlistRemoved: (name) => `Removed "${name}"`,
+    resolveError: 'Failed to resolve playlist. Check the URL and try again.',
   },
   ar: {
     appTitle: 'آخر المنشورات',
@@ -305,6 +306,7 @@ const translations = {
     markAllUnwatched: 'إلغاء تحديد الكل',
     playlistAdded: (name) => `تمت إضافة "${name}"`,
     playlistRemoved: (name) => `تمت إزالة "${name}"`,
+    resolveError: 'فشل في حل القائمة. تحقق من الرابط وحاول مرة أخرى.',
   },
 };
 

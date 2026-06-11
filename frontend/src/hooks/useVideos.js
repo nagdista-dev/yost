@@ -35,27 +35,36 @@ export default function useVideos(channels, refreshTrigger = 0) {
       const results = {};
       let failed = 0;
 
-      const promises = channels.map(async (ch) => {
-        const handle = typeof ch === 'string' ? ch : ch.handle;
-        try {
-          const { data } = await api.get('/api/latest-video', { params: { channelHandle: handle } });
-          if (!cancelled && data.video) {
-            results[handle] = {
-              ...data.video,
-              _channelName: ch.name || ch.handle.replace('@', ''),
-              _channelHandle: handle,
-              _channelCategories: ch.categories || ['Unspecified'],
-            };
-          }
-        } catch {
-          failed++;
-        }
-        if (!cancelled) {
-          setProgress(prev => ({ ...prev, loaded: prev.loaded + 1 }));
-        }
-      });
+      const BATCH_SIZE = 5;
 
-      await Promise.allSettled(promises);
+      for (let i = 0; i < channels.length; i += BATCH_SIZE) {
+        if (cancelled) break;
+        const batch = channels.slice(i, i + BATCH_SIZE);
+
+        await Promise.allSettled(batch.map(async (ch) => {
+          const handle = typeof ch === 'string' ? ch : ch.handle;
+          try {
+            const { data } = await api.get('/api/latest-video', { params: { channelHandle: handle } });
+            if (!cancelled && data.video) {
+              results[handle] = {
+                ...data.video,
+                _channelName: ch.name || ch.handle.replace('@', ''),
+                _channelHandle: handle,
+                _channelCategories: ch.categories || ['Unspecified'],
+              };
+            }
+          } catch {
+            failed++;
+          }
+          if (!cancelled) {
+            setProgress(prev => ({ ...prev, loaded: prev.loaded + 1 }));
+          }
+        }));
+
+        if (!cancelled && i + BATCH_SIZE < channels.length) {
+          await new Promise(r => setTimeout(r, 300));
+        }
+      }
 
       if (failed > 0 && !cancelled) {
         toast.error(t(language, 'fetchVideosError'));

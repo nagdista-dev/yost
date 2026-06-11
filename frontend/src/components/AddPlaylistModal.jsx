@@ -9,6 +9,7 @@ export default function AddPlaylistModal({ show, onClose, onAdd, categories }) {
   const [name, setName] = useState('');
   const [channelName, setChannelName] = useState('');
   const [resolving, setResolving] = useState(false);
+  const [resolveError, setResolveError] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [categoryInput, setCategoryInput] = useState('');
   const { language } = useTheme();
@@ -25,6 +26,7 @@ export default function AddPlaylistModal({ show, onClose, onAdd, categories }) {
     setName('');
     setChannelName('');
     setResolving(false);
+    setResolveError('');
     setSelectedCategories([]);
     setCategoryInput('');
     if (resolveTimer.current) clearTimeout(resolveTimer.current);
@@ -59,6 +61,7 @@ export default function AddPlaylistModal({ show, onClose, onAdd, categories }) {
     setUrl('');
     setName('');
     setChannelName('');
+    setResolveError('');
     setSelectedCategories([]);
     setCategoryInput('');
   }
@@ -114,7 +117,10 @@ export default function AddPlaylistModal({ show, onClose, onAdd, categories }) {
                     const { data } = await api.get('/api/resolve-playlist', { params: { playlistUrl: val } });
                     if (data.name) setName(data.name);
                     if (data.channelName) setChannelName(data.channelName);
-                  } catch {}
+                    setResolveError('');
+                  } catch (err) {
+                    setResolveError(err.response?.data?.error || err.message || t(language, 'resolveError'));
+                  }
                   setResolving(false);
                 }, 600);
               }}
@@ -123,6 +129,9 @@ export default function AddPlaylistModal({ show, onClose, onAdd, categories }) {
               className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
               autoFocus
             />
+            {resolveError && (
+              <p className="mt-1.5 text-xs text-red-500">{resolveError}</p>
+            )}
           </div>
 
           <div>
@@ -147,7 +156,10 @@ export default function AddPlaylistModal({ show, onClose, onAdd, categories }) {
                     const { data } = await api.get('/api/resolve-playlist', { params: { playlistUrl: url } });
                     if (data.name) setName(data.name);
                     if (data.channelName) setChannelName(data.channelName);
-                  } catch {}
+                    setResolveError('');
+                  } catch (err) {
+                    setResolveError(err.response?.data?.error || err.message || t(language, 'resolveError'));
+                  }
                   setResolving(false);
                 }}
                 disabled={resolving}

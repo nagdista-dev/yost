@@ -11,12 +11,16 @@ export default function VideoThumbnail({ video, rank, onPlay, language = 'en' })
       onClick={() => onPlay(video.videoId)}
     >
       {video.thumbnail ? (
-        <img
-          src={video.thumbnail}
-          alt={video.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          loading="lazy"
-        />
+          <img
+            src={video.thumbnail}
+            alt={video.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            loading="lazy"
+            onError={(e) => {
+              e.target.src = `https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`;
+              e.target.onerror = null;
+            }}
+          />
       ) : (
         <div className="w-full h-full flex items-center justify-center text-yt-text-muted/30">
           <Film size={48} />
