@@ -149,6 +149,7 @@ const translations = {
     playlistAdded: (name) => `Added "${name}"`,
     playlistRemoved: (name) => `Removed "${name}"`,
     resolveError: 'Failed to resolve playlist. Check the URL and try again.',
+    noVideo: 'No video',
   },
   ar: {
     appTitle: 'آخر المنشورات',
@@ -307,6 +308,7 @@ const translations = {
     playlistAdded: (name) => `تمت إضافة "${name}"`,
     playlistRemoved: (name) => `تمت إزالة "${name}"`,
     resolveError: 'فشل في حل القائمة. تحقق من الرابط وحاول مرة أخرى.',
+    noVideo: 'لا يوجد فيديو',
   },
 };
 

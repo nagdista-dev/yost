@@ -8,7 +8,7 @@ export default function VideoThumbnail({ video, rank, onPlay, language = 'en' })
   return (
     <div
       className="aspect-video bg-yt-bg-tertiary overflow-hidden relative cursor-pointer"
-      onClick={() => onPlay(video.videoId)}
+      onClick={() => video.videoId && onPlay(video.videoId)}
     >
       {video.thumbnail ? (
           <img

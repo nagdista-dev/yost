@@ -7,6 +7,32 @@ import timeAgo, { formatDuration } from '../utils/timeAgo';
 
 export default function ListCard({ video, ranks, onPlay, onChannelClick, onEditChannel }) {
   const { language } = useTheme();
+
+  if (video._noVideo) {
+    const avatarLetter = (video._channelName || video._channelHandle || '').replace('@', '').charAt(0).toUpperCase();
+    return (
+      <div className="group bg-yt-bg-card rounded-xl border border-yt-border/50 shadow-sm overflow-hidden flex items-center gap-3 p-3 opacity-70">
+        <div className="w-36 sm:w-44 h-20 sm:h-28 shrink-0 rounded-xl bg-yt-bg-tertiary flex items-center justify-center text-yt-text-muted/40">
+          <span className="text-xs font-medium">{t(language, 'noVideo')}</span>
+        </div>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <span className="w-6 h-6 rounded-full bg-yt-accent/20 text-yt-accent text-[10px] font-bold flex items-center justify-center shrink-0">
+            {avatarLetter}
+          </span>
+          <span className="text-yt-text-secondary text-sm truncate">
+            {video._channelName || video._channelHandle}
+          </span>
+          <button
+            onClick={(e) => { e.stopPropagation(); onEditChannel?.(video._channelHandle); }}
+            className="p-1 rounded-lg text-yt-text-muted/60 hover:bg-yt-accent/10 hover:text-yt-accent transition shrink-0"
+          >
+            <Edit2 size={12} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const ratio = engagementRate(video.likes, video.views);
   const ago = timeAgo(video.published, language);
   const duration = formatDuration(video.length);

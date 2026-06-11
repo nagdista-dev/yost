@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import api from '../api';
 import { useTheme } from '../context/useTheme';
@@ -36,9 +36,8 @@ function saveCache(channels, data) {
 
 export default function useVideos(channels, refreshTrigger = 0) {
   const { language } = useTheme();
-  const initialData = useRef(loadCached(channels));
-  const [videos, setVideos] = useState(initialData.current || {});
-  const [loading, setLoading] = useState(!initialData.current);
+  const [videos, setVideos] = useState({});
+  const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState({ loaded: 0, total: 0 });
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [sortBy, setSortBy] = useState('newest');
@@ -46,16 +45,20 @@ export default function useVideos(channels, refreshTrigger = 0) {
 
   const allCategories = [...new Set(channels.flatMap(ch => ch.categories || []).filter(Boolean))].sort();
 
-  const hasCached = !!initialData.current;
-
   useEffect(() => {
     if (channels.length === 0) {
+      setVideos({});
       setLoading(false);
       setProgress({ loaded: 0, total: 0 });
       return;
     }
 
-    if (hasCached && refreshTrigger === 0) return;
+    const cached = loadCached(channels);
+    if (cached && refreshTrigger === 0) {
+      setVideos(cached);
+      setLoading(false);
+      return;
+    }
 
     let cancelled = false;
 
@@ -73,17 +76,20 @@ export default function useVideos(channels, refreshTrigger = 0) {
 
         await Promise.allSettled(batch.map(async (ch) => {
           const handle = typeof ch === 'string' ? ch : ch.handle;
+          const base = {
+            _channelName: ch.name || ch.handle.replace('@', ''),
+            _channelHandle: handle,
+            _channelCategories: ch.categories || ['Unspecified'],
+          };
           try {
             const { data } = await api.get('/api/latest-video', { params: { channelHandle: handle } });
-            if (!cancelled && data.video) {
-              results[handle] = {
-                ...data.video,
-                _channelName: ch.name || ch.handle.replace('@', ''),
-                _channelHandle: handle,
-                _channelCategories: ch.categories || ['Unspecified'],
-              };
+            if (!cancelled) {
+              results[handle] = data.video
+                ? { ...data.video, ...base }
+                : { ...base, _noVideo: true };
             }
           } catch {
+            if (!cancelled) results[handle] = { ...base, _noVideo: true };
             failed++;
           }
           if (!cancelled) {
