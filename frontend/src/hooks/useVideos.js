@@ -8,7 +8,7 @@ export default function useVideos(channels) {
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [sortBy, setSortBy] = useState('newest');
 
-  const allCategories = [...new Set(channels.map(ch => ch.category).filter(Boolean))];
+  const allCategories = [...new Set(channels.flatMap(ch => ch.categories || []).filter(Boolean))].sort();
 
   useEffect(() => {
     if (channels.length === 0) {
@@ -33,7 +33,7 @@ export default function useVideos(channels) {
               ...data.video,
               _channelName: ch.name || ch.handle.replace('@', ''),
               _channelHandle: handle,
-              _channelCategory: ch.category,
+              _channelCategories: ch.categories || ['Unspecified'],
             };
           }
         } catch {}
@@ -55,7 +55,7 @@ export default function useVideos(channels) {
   }, [channels]);
 
   const videoList = useMemo(() => {
-    const filtered = Object.values(videos).filter(v => !categoryFilter || v._channelCategory === categoryFilter);
+    const filtered = Object.values(videos).filter(v => !categoryFilter || (v._channelCategories || []).includes(categoryFilter));
 
     let sorted;
     switch (sortBy) {

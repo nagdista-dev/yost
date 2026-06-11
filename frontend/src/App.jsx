@@ -83,7 +83,7 @@ function AppContent() {
     switch (activeTab) {
       case 'home': {
         const filtered = selectedCategory
-          ? channels.filter(c => c.category === selectedCategory)
+          ? channels.filter(c => (c.categories || []).includes(selectedCategory))
           : channels;
         const emptyMsg = selectedCategory
           ? `${t(language, 'noChannels')} (${t(language, 'category')}: ${selectedCategory})`
@@ -145,7 +145,7 @@ function AppContent() {
         title={pageTitle()}
         onAddChannel={() => setShowAddModal(true)}
         onMenuToggle={() => setSidebarOpen(prev => !prev)}
-        onGoHome={() => { handleSetActiveTab('home'); setSelectedCategory(null); }}
+        onGoHome={() => { handleSetActiveTab(getStartPage()); setSelectedCategory(null); }}
       />
       <ChannelSidebar
         activeTab={activeTab}

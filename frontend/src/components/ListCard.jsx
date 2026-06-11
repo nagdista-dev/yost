@@ -3,33 +3,14 @@ import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 import { formatViews } from '../utils/formatCount';
 import { engagementRate } from '../utils/timeAgo';
-import { watchScore } from '../utils/watchScore';
-import WatchScoreRing from './WatchScoreRing';
-import timeAgo from '../utils/timeAgo';
-
-function ChannelAvatar({ name }) {
-  const letter = (name || '?').charAt(0).toUpperCase();
-  const colors = [
-    'bg-rose-500', 'bg-pink-500', 'bg-fuchsia-500', 'bg-purple-500',
-    'bg-violet-500', 'bg-indigo-500', 'bg-blue-500', 'bg-sky-500',
-    'bg-cyan-500', 'bg-teal-500', 'bg-emerald-500', 'bg-green-500',
-    'bg-lime-500', 'bg-yellow-500', 'bg-amber-500', 'bg-orange-500',
-  ];
-  const color = colors[name ? name.charCodeAt(0) % colors.length : 0];
-
-  return (
-    <div className={`w-4 h-4 rounded-full ${color} flex items-center justify-center text-white text-[8px] font-bold shrink-0`}>
-      {letter}
-    </div>
-  );
-}
+import timeAgo, { formatDuration } from '../utils/timeAgo';
 
 export default function ListCard({ video, ranks, onPlay }) {
   const { language } = useTheme();
   const ratio = engagementRate(video.likes, video.views);
-  const ago = timeAgo(video.published);
+  const ago = timeAgo(video.published, language);
+  const duration = formatDuration(video.length);
   const viewsLabel = formatViews(video.views) || '0';
-  const score = watchScore(video);
   const rank = ranks?.viewsRank;
 
   return (
@@ -54,6 +35,14 @@ export default function ListCard({ video, ranks, onPlay }) {
             <Play size={18} className="text-white ml-0.5" />
           </div>
         </div>
+        {duration && (
+          <div className="absolute bottom-1 left-1">
+            <span className="bg-black/80 text-white text-[9px] px-1 py-0.5 rounded font-medium">
+              {duration}
+            </span>
+          </div>
+        )}
+
         <div className="absolute bottom-1 right-1 flex items-center gap-1">
           {rank && rank <= 3 && (
             <span className="bg-yt-accent text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg">
@@ -74,12 +63,9 @@ export default function ListCard({ video, ranks, onPlay }) {
           <h3 className="text-yt-text font-semibold text-sm leading-snug line-clamp-1 group-hover:text-yt-accent transition-colors">
             {video.title || t(language, 'untitled')}
           </h3>
-          <div className="flex items-center gap-1.5 mt-1">
-            <ChannelAvatar name={video._channelName} />
-            <p className="text-yt-text-muted text-xs truncate">
-              {video._channelName}
-            </p>
-          </div>
+          <p className="text-yt-text-muted text-xs truncate mt-1">
+            {video._channelHandle}
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-yt-text-muted pt-1 border-t border-yt-border/30">
@@ -98,9 +84,6 @@ export default function ListCard({ video, ranks, onPlay }) {
               <TrendingUp size={12} />
               {ratio}%
             </span>
-          )}
-          {score != null && (
-            <WatchScoreRing score={score} size={16} strokeWidth={2} />
           )}
           {ranks?.viewsRank && ranks.viewsRank <= 3 && (
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-yt-accent/10 text-yt-accent">

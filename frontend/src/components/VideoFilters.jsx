@@ -1,4 +1,4 @@
-import { LayoutGrid, List, ChevronDown } from 'lucide-react';
+import { LayoutGrid, List, ChevronDown, X } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
@@ -23,37 +23,20 @@ export default function VideoFilters({
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Category pills - scrollable horizontally */}
-      {allCategories.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
-          <button
-            onClick={() => setCategoryFilter(null)}
-            className={`shrink-0 px-3.5 py-1.5 text-xs rounded-xl border transition font-medium ${
-              !categoryFilter
-                ? 'bg-yt-accent text-white border-yt-accent shadow-sm'
-                : 'bg-yt-bg-tertiary/40 text-yt-text-secondary border-yt-border/30 hover:border-yt-accent/50 hover:text-yt-text'
-            }`}
-          >
-            {t(language, 'allCategories')}
-          </button>
-          {allCategories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              className={`shrink-0 px-3.5 py-1.5 text-xs rounded-xl border transition font-medium whitespace-nowrap ${
-                categoryFilter === cat
-                  ? 'bg-yt-accent text-white border-yt-accent shadow-sm'
-                  : 'bg-yt-bg-tertiary/40 text-yt-text-secondary border-yt-border/30 hover:border-yt-accent/50 hover:text-yt-text'
-              }`}
-            >
-              {cat === 'Unspecified' ? t(language, 'unspecified') : cat}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Sort + View controls row */}
       <div className="flex items-center gap-2 flex-wrap">
+        <select
+          value={categoryFilter || ''}
+          onChange={e => setCategoryFilter(e.target.value || null)}
+          className="appearance-none px-3 py-2 pr-8 text-xs rounded-lg border border-yt-border/40 bg-yt-bg-tertiary/50 text-yt-text-secondary outline-none focus:ring-2 focus:ring-yt-accent cursor-pointer font-medium max-w-[200px]"
+        >
+          <option value="">{t(language, 'allCategories')}</option>
+          {allCategories.map(cat => (
+            <option key={cat} value={cat}>
+              {cat === 'Unspecified' ? t(language, 'unspecified') : cat}
+            </option>
+          ))}
+        </select>
+
         <div className="relative">
           <select
             value={sortBy}
@@ -88,6 +71,20 @@ export default function VideoFilters({
           </button>
         </div>
       </div>
+
+      {categoryFilter && (
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-yt-accent/10 text-yt-accent text-xs font-medium">
+            {categoryFilter === 'Unspecified' ? t(language, 'unspecified') : categoryFilter}
+            <button
+              onClick={() => setCategoryFilter(null)}
+              className="hover:bg-yt-accent/20 rounded p-0.5 transition"
+            >
+              <X size={12} />
+            </button>
+          </span>
+        </div>
+      )}
     </div>
   );
 }

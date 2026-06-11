@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, Heart, Trash2, Edit2, X, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/useTheme';
@@ -12,7 +12,9 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
   const [confirmOpen, setConfirmOpen] = useState(null);
   const [editing, setEditing] = useState(null);
   const [editName, setEditName] = useState('');
-  const [editCategory, setEditCategory] = useState('');
+  const [editCategories, setEditCategories] = useState([]);
+  const [editCategoryInput, setEditCategoryInput] = useState('');
+  const editCategoryRef = useRef(null);
 
   // Close modals on Escape
   useEffect(() => {
@@ -33,30 +35,52 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
     const q = query.toLowerCase();
     return (
       ch.handle.toLowerCase().includes(q) ||
-      (ch.category && ch.category.toLowerCase().includes(q))
+      (ch.categories || []).some(c => c.toLowerCase().includes(q))
     );
   }
 
   const filteredChannels = channels.filter(ch => {
     const matchesSearch = matches(ch, search);
-    const matchesCategory = !categoryFilter || ch.category === categoryFilter;
+    const matchesCategory = !categoryFilter || (ch.categories || []).includes(categoryFilter);
     return matchesSearch && matchesCategory;
   });
 
   function startEdit(ch) {
     setEditing(ch);
     setEditName(ch.name || '');
-    setEditCategory(ch.category || 'Unspecified');
+    setEditCategories([...(ch.categories || ['Unspecified'])]);
+    setEditCategoryInput('');
+  }
+
+  function addEditCategory(cat) {
+    const trimmed = cat.trim();
+    if (!trimmed || editCategories.includes(trimmed)) return;
+    if (trimmed === t(language, 'unspecified') || trimmed === 'Unspecified') return;
+    setEditCategories(prev => [...prev, trimmed]);
+    setEditCategoryInput('');
+    editCategoryRef.current?.focus();
+  }
+
+  function removeEditCategory(cat) {
+    setEditCategories(prev => prev.filter(c => c !== cat));
+  }
+
+  function handleEditCategoryKeyDown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (editCategoryInput.trim()) {
+        addEditCategory(editCategoryInput);
+      }
+    }
+    if (e.key === 'Backspace' && !editCategoryInput && editCategories.length > 0) {
+      removeEditCategory(editCategories[editCategories.length - 1]);
+    }
   }
 
   function handleSaveEdit() {
     if (!editing) return;
-    const rawCat = editCategory.trim();
-    // Normalize translated "unspecified" back to "Unspecified"
-    const category = (!rawCat || rawCat === t(language, 'unspecified') || rawCat === 'Unspecified')
-      ? 'Unspecified'
-      : rawCat;
-    onUpdateChannel(editing, { ...editing, name: editName.trim(), category });
+    const cats = editCategories.length > 0 ? editCategories : ['Unspecified'];
+    onUpdateChannel(editing, { ...editing, name: editName.trim(), categories: cats });
     setEditing(null);
   }
 
@@ -69,6 +93,8 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
   function avatarLetter(ch) {
     return ch.handle.replace('@', '').charAt(0).toUpperCase();
   }
+
+  const editAvailable = categories.filter(c => c !== 'Unspecified' && !editCategories.includes(c));
 
   return (
     <div className="space-y-6">
@@ -83,7 +109,6 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
           />
         </div>
 
-        {/* Category filter */}
         {categories.length > 0 && (
           <div className="flex flex-wrap gap-1.5 md:gap-2 mb-4 md:mb-5">
             {['All', ...categories].map(cat => {
@@ -166,13 +191,12 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
                               <ExternalLink size={14} />
                             </button>
                           </div>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            {ch.category && ch.category !== 'Unspecified' && (
-                              <>
-                                <span className="text-yt-text-muted text-[10px]">·</span>
-                                <span className="text-yt-text-muted text-xs">{ch.category}</span>
-                              </>
-                            )}
+                          <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                            {(ch.categories || []).filter(c => c !== 'Unspecified').map(cat => (
+                              <span key={cat} className="text-yt-text-muted text-[10px] bg-yt-bg-tertiary/50 px-1.5 py-0.5 rounded">
+                                {cat}
+                              </span>
+                            ))}
                           </div>
                         </div>
 
@@ -294,19 +318,51 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
                 <label className="text-yt-text-secondary text-xs font-medium mb-1.5 block">
                   {t(language, 'category')}
                 </label>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {editCategories.map(cat => (
+                    <span
+                      key={cat}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-yt-accent/10 text-yt-accent text-xs font-medium"
+                    >
+                      {cat}
+                      <button
+                        type="button"
+                        onClick={() => removeEditCategory(cat)}
+                        className="hover:bg-yt-accent/20 rounded p-0.5 transition"
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
                 <input
-                  value={editCategory}
-                  onChange={e => setEditCategory(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleSaveEdit()}
-                  placeholder={t(language, 'unspecified')}
+                  ref={editCategoryRef}
+                  value={editCategoryInput}
+                  onChange={e => setEditCategoryInput(e.target.value)}
+                  onKeyDown={handleEditCategoryKeyDown}
+                  placeholder={t(language, 'addChannel') + '...'}
                   list="edit-category-suggestions"
                   className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
                 />
                 <datalist id="edit-category-suggestions">
-                  {['Unspecified', ...categories.filter(c => c !== 'Unspecified')].map(c => (
+                  {editAvailable.map(c => (
                     <option key={c} value={c} />
                   ))}
                 </datalist>
+                {editAvailable.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {editAvailable.slice(0, 6).map(cat => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => addEditCategory(cat)}
+                        className="px-2 py-0.5 text-[10px] rounded-md border border-yt-border/30 text-yt-text-muted hover:text-yt-text hover:border-yt-accent/50 transition"
+                      >
+                        +{cat}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

@@ -69,6 +69,7 @@ async function scrapeLatestVideo(handle) {
     let likes = '';
     let comments = '';
     let dislikes = '';
+    let videoLength = '';
     try {
       const vRsp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
         signal: AbortSignal.timeout(10000),
@@ -79,9 +80,11 @@ async function scrapeLatestVideo(handle) {
         const vcMatch = vHtml.match(/"viewCount"\s*:\s*"(\d+)"/);
         const lcMatch = vHtml.match(/"likeCount"\s*:\s*"(\d+)"/);
         const ccMatch = vHtml.match(/"commentCount"\s*:\s*"(\d+)"/);
+        const durMatch = vHtml.match(/"lengthSeconds"\s*:\s*"(\d+)"/);
         if (vcMatch) views = vcMatch[1];
         if (lcMatch) likes = lcMatch[1];
         if (ccMatch) comments = ccMatch[1];
+        if (durMatch) videoLength = durMatch[1];
       }
     } catch (_) { }
 
@@ -103,7 +106,7 @@ async function scrapeLatestVideo(handle) {
       likes,
       comments,
       dislikes,
-      length: '',
+      length: videoLength,
       published: publishedDate,
       videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
     };

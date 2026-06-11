@@ -1,14 +1,18 @@
-import { useState } from 'react';
-import { Heart } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Heart, X } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
 export default function AddChannelModal({ show, onClose, onAdd, categories }) {
   const [input, setInput] = useState('');
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [categoryInput, setCategoryInput] = useState('');
   const [favorite, setFavorite] = useState(false);
   const { language } = useTheme();
+  const categoryRef = useRef(null);
+
+  const availableCategories = categories.filter(c => c !== 'Unspecified' && !selectedCategories.includes(c));
 
   function normalizeHandle(raw) {
     let handle = raw.trim();
@@ -24,10 +28,36 @@ export default function AddChannelModal({ show, onClose, onAdd, categories }) {
     return handle;
   }
 
+  function addCategory(cat) {
+    const trimmed = cat.trim();
+    if (!trimmed || selectedCategories.includes(trimmed)) return;
+    if (trimmed === t(language, 'unspecified') || trimmed === 'Unspecified') return;
+    setSelectedCategories(prev => [...prev, trimmed]);
+    setCategoryInput('');
+    categoryRef.current?.focus();
+  }
+
+  function removeCategory(cat) {
+    setSelectedCategories(prev => prev.filter(c => c !== cat));
+  }
+
+  function handleCategoryKeyDown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (categoryInput.trim()) {
+        addCategory(categoryInput);
+      }
+    }
+    if (e.key === 'Backspace' && !categoryInput && selectedCategories.length > 0) {
+      removeCategory(selectedCategories[selectedCategories.length - 1]);
+    }
+  }
+
   function reset() {
     setInput('');
     setName('');
-    setCategory('');
+    setSelectedCategories([]);
+    setCategoryInput('');
     setFavorite(false);
   }
 
@@ -38,7 +68,7 @@ export default function AddChannelModal({ show, onClose, onAdd, categories }) {
     onAdd({
       handle,
       name: name.trim(),
-      category: category.trim() || 'Unspecified',
+      categories: selectedCategories.length > 0 ? selectedCategories : ['Unspecified'],
       favorite,
     });
 
@@ -46,7 +76,7 @@ export default function AddChannelModal({ show, onClose, onAdd, categories }) {
   }
 
   function handleKeyDown(e) {
-    if (e.key === 'Enter') handleAdd();
+    if (e.key === 'Enter' && !categoryInput) handleAdd();
   }
 
   if (!show) return null;
@@ -106,19 +136,53 @@ export default function AddChannelModal({ show, onClose, onAdd, categories }) {
             <label className="text-yt-text-secondary text-xs font-medium mb-1.5 block">
               {t(language, 'category')}
             </label>
-            <input
-              value={category}
-              onChange={e => setCategory(e.target.value)}
-              placeholder={t(language, 'unspecified')}
-              list="category-suggestions"
-              className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
-            />
-            <datalist id="category-suggestions">
-              <option value={t(language, 'unspecified')} />
-              {categories.filter(c => c !== 'Unspecified').map(c => (
-                <option key={c} value={c} />
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {selectedCategories.map(cat => (
+                <span
+                  key={cat}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-yt-accent/10 text-yt-accent text-xs font-medium"
+                >
+                  {cat}
+                  <button
+                    type="button"
+                    onClick={() => removeCategory(cat)}
+                    className="hover:bg-yt-accent/20 rounded p-0.5 transition"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
               ))}
-            </datalist>
+            </div>
+            <div className="relative">
+              <input
+                ref={categoryRef}
+                value={categoryInput}
+                onChange={e => setCategoryInput(e.target.value)}
+                onKeyDown={handleCategoryKeyDown}
+                placeholder={selectedCategories.length === 0 ? t(language, 'unspecified') : t(language, 'addChannel') + '...'}
+                list="category-suggestions"
+                className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
+              />
+              <datalist id="category-suggestions">
+                {availableCategories.map(c => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+            </div>
+            {availableCategories.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {availableCategories.slice(0, 6).map(cat => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => addCategory(cat)}
+                    className="px-2 py-0.5 text-[10px] rounded-md border border-yt-border/30 text-yt-text-muted hover:text-yt-text hover:border-yt-accent/50 transition"
+                  >
+                    +{cat}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <label className="flex items-center gap-3 cursor-pointer group">

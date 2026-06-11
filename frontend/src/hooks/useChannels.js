@@ -5,6 +5,11 @@ import { t } from '../i18n';
 
 const STORAGE_KEY = 'yt_feed_channels';
 
+function migrateChannel(ch) {
+  if (ch.categories) return ch;
+  return { ...ch, categories: ch.category ? [ch.category] : ['Unspecified'] };
+}
+
 function loadChannels() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -13,13 +18,15 @@ function loadChannels() {
     if (parsed.length > 0 && typeof parsed[0] === 'string') {
       const migrated = parsed.map(handle => ({
         handle,
-        category: 'Unspecified',
+        categories: ['Unspecified'],
         favorite: false,
       }));
       saveChannels(migrated);
       return migrated;
     }
-    return parsed;
+    const migrated = parsed.map(migrateChannel);
+    saveChannels(migrated);
+    return migrated;
   } catch {
     return [];
   }
@@ -33,7 +40,7 @@ export default function useChannels() {
   const [channels, setChannels] = useState(loadChannels);
   const { language } = useTheme();
 
-  const categories = [...new Set(channels.map(c => c.category).filter(Boolean))].sort();
+  const categories = [...new Set(channels.flatMap(c => c.categories || []).filter(Boolean))].sort();
 
   function handleAddChannel(channelObj) {
     const existing = channels.find(c => c.handle.toLowerCase() === channelObj.handle.toLowerCase());
@@ -41,7 +48,7 @@ export default function useChannels() {
       toast.error(t(language, 'channelExists'));
       return false;
     }
-    const updated = [...channels, channelObj];
+    const updated = [...channels, { ...channelObj, categories: channelObj.categories || ['Unspecified'] }];
     setChannels(updated);
     saveChannels(updated);
     toast.success(t(language, 'channelAdded', channelObj.handle));
@@ -75,12 +82,12 @@ export default function useChannels() {
     imported.forEach(ch => {
       const key = ch.handle.toLowerCase();
       if (!existing.has(key)) {
-        existing.set(key, {
+        existing.set(key, migrateChannel({
           handle: ch.handle,
           name: ch.name || '',
           category: ch.category || 'Unspecified',
           favorite: ch.favorite || false,
-        });
+        }));
         added++;
       }
     });

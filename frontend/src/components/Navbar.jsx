@@ -20,7 +20,7 @@ export default function Navbar({ title, onAddChannel, onMenuToggle, onGoHome }) 
 
         <span 
           onClick={onGoHome}
-          className="text-yt-text text-lg font-extrabold tracking-tight flex-shrink-0 cursor-pointer hover:opacity-80 transition"
+          className="text-yt-text text-lg font-extrabold tracking-tight flex-shrink-0 cursor-pointer hover:opacity-80 transition select-none"
         >
           <span className="brand-y" style={{ fontSize: '1.4em' }}>Y</span>ost
         </span>

@@ -1,8 +1,6 @@
 import { Eye, Heart, TrendingUp } from 'lucide-react';
 import { formatViews } from '../utils/formatCount';
 import { engagementRate } from '../utils/timeAgo';
-import { watchScore } from '../utils/watchScore';
-import WatchScoreRing from './WatchScoreRing';
 
 function StatPill({ icon, value, accent }) {
   return (
@@ -22,7 +20,6 @@ export default function VideoStats({ video, ranks }) {
   const viewsFormatted = formatViews(video.views) || '0';
   const likesFormatted = formatViews(video.likes) || '0';
   const ratio = engagementRate(video.likes, video.views);
-  const score = watchScore(video);
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
@@ -41,9 +38,6 @@ export default function VideoStats({ video, ranks }) {
           icon={<TrendingUp size={12} />}
           value={`${ratio}%`}
         />
-      )}
-      {score != null && (
-        <WatchScoreRing score={score} size={24} strokeWidth={2.5} />
       )}
     </div>
   );

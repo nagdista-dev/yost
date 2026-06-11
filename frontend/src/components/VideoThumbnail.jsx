@@ -1,8 +1,9 @@
 import { Film, Play, Clock } from 'lucide-react';
-import timeAgo from '../utils/timeAgo';
+import timeAgo, { formatDuration } from '../utils/timeAgo';
 
-export default function VideoThumbnail({ video, rank, onPlay }) {
-  const ago = timeAgo(video.published);
+export default function VideoThumbnail({ video, rank, onPlay, language = 'en' }) {
+  const ago = timeAgo(video.published, language);
+  const duration = formatDuration(video.length);
 
   return (
     <div
@@ -29,6 +30,14 @@ export default function VideoThumbnail({ video, rank, onPlay }) {
           <Play size={24} className="text-white ml-0.5" />
         </div>
       </div>
+
+      {duration && (
+        <div className="absolute bottom-2 left-2">
+          <span className="bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">
+            {duration}
+          </span>
+        </div>
+      )}
 
       <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
         {rank && rank <= 3 && (
