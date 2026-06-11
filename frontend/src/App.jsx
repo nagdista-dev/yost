@@ -34,6 +34,7 @@ function AppContent() {
 
   const handleSetActiveTab = useCallback((tab) => {
     setActiveTab(tab);
+    setChannelProfile(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 

@@ -1,15 +1,18 @@
-import { useState, useEffect } from 'react';
-import { ArrowLeft, Play, Clock, Film } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { ArrowLeft, Search, X, LayoutGrid, List, ChevronDown } from 'lucide-react';
 import api from '../api';
-import timeAgo from '../utils/timeAgo';
+import VideoCard from '../components/VideoCard';
+import VideoSkeleton from '../components/VideoSkeleton';
 import VideoPlayerModal from '../components/VideoPlayerModal';
-import { useTheme } from '../context/useTheme';
+const SORT_OPTIONS = ['newest', 'views'];
 
 export default function ChannelPage({ channelHandle, onBack }) {
-  const { language } = useTheme();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [playing, setPlaying] = useState(null);
+  const [listMode, setListMode] = useState(false);
+  const [sortBy, setSortBy] = useState('newest');
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -29,6 +32,24 @@ export default function ChannelPage({ channelHandle, onBack }) {
 
   const avatarLetter = (data?.channelName || channelHandle).replace('@', '').charAt(0).toUpperCase();
 
+  const processedVideos = useMemo(() => {
+    if (!data?.videos) return [];
+    let list = data.videos.map(v => ({
+      ...v,
+      _channelHandle: data.channelHandle,
+    }));
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(v => v.title.toLowerCase().includes(q));
+    }
+    if (sortBy === 'newest') {
+      list.sort((a, b) => new Date(b.published) - new Date(a.published));
+    } else if (sortBy === 'views') {
+      list.sort((a, b) => (parseInt(b.views) || 0) - (parseInt(a.views) || 0));
+    }
+    return list;
+  }, [data, search, sortBy]);
+
   return (
     <div className="space-y-5">
       <button
@@ -40,25 +61,28 @@ export default function ChannelPage({ channelHandle, onBack }) {
       </button>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="w-6 h-6 border-2 border-yt-accent border-t-transparent rounded-full animate-spin" />
-        </div>
+        <>
+          <div className="bg-yt-bg-card rounded-xl border border-yt-border/50 p-5 md:p-6 flex items-center gap-4 animate-pulse">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-yt-bg-tertiary shrink-0" />
+            <div className="space-y-2 flex-1">
+              <div className="h-5 bg-yt-bg-tertiary rounded w-1/3" />
+              <div className="h-3 bg-yt-bg-tertiary rounded w-1/5" />
+            </div>
+          </div>
+          <div className={listMode ? 'space-y-3' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5'}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <VideoSkeleton key={i} list={listMode} />
+            ))}
+          </div>
+        </>
       ) : !data ? (
         <div className="text-center text-yt-text-muted py-20 text-sm">Could not load channel.</div>
       ) : (
         <>
           <div className="bg-yt-bg-card rounded-xl border border-yt-border/50 p-5 md:p-6 flex items-center gap-4">
-            {data.avatar ? (
-              <img
-                src={data.avatar}
-                alt={data.channelName}
-                className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-yt-border/30"
-              />
-            ) : (
-              <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-yt-accent/20 flex items-center justify-center text-yt-accent text-xl md:text-2xl font-bold shrink-0">
-                {avatarLetter}
-              </div>
-            )}
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-yt-accent/20 flex items-center justify-center text-yt-accent text-xl md:text-2xl font-bold shrink-0">
+              {avatarLetter}
+            </div>
             <div className="min-w-0">
               <h1 className="text-yt-text text-xl md:text-2xl font-bold truncate">
                 {data.channelName}
@@ -67,50 +91,90 @@ export default function ChannelPage({ channelHandle, onBack }) {
             </div>
           </div>
 
-          {data.videos && data.videos.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-              {data.videos.map(video => (
-                <div
-                  key={video.videoId}
-                  className="group bg-yt-bg-card rounded-xl border border-yt-border/50 shadow-sm hover:shadow-xl hover:border-yt-accent/20 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden flex flex-col cursor-pointer"
-                  onClick={() => setPlaying(video.videoId)}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative flex-1 min-w-[160px] max-w-xs">
+                <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none text-yt-text-muted" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search videos..."
+                  className="w-full ps-9 pe-8 py-2 text-xs rounded-lg border border-yt-border/40 bg-yt-bg-tertiary/50 text-yt-text-secondary outline-none focus:ring-2 focus:ring-yt-accent"
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch('')}
+                    className="absolute end-2 top-1/2 -translate-y-1/2 text-yt-text-muted hover:text-yt-text"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={e => setSortBy(e.target.value)}
+                  className="appearance-none px-3 py-2 pr-8 text-xs rounded-lg border border-yt-border/40 bg-yt-bg-tertiary/50 text-yt-text-secondary outline-none focus:ring-2 focus:ring-yt-accent cursor-pointer font-medium"
                 >
-                  <div className="aspect-video bg-yt-bg-tertiary relative overflow-hidden">
-                    {video.thumbnail ? (
-                      <img
-                        src={video.thumbnail}
-                        alt={video.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-yt-text-muted/30">
-                        <Film size={32} />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <div className="w-12 h-12 rounded-full bg-yt-accent/90 flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform duration-300">
-                        <Play size={20} className="text-white ml-0.5" />
-                      </div>
-                    </div>
-                    <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
-                      <span className="bg-black/70 text-white/90 text-[10px] px-1.5 py-0.5 rounded font-medium backdrop-blur-sm flex items-center gap-1">
-                        <Clock size={10} />
-                        {timeAgo(video.published, language)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-3 flex-1 min-w-0">
-                    <h3 className="text-yt-text font-semibold text-sm leading-snug line-clamp-2 group-hover:text-yt-accent transition-colors">
-                      {video.title}
-                    </h3>
-                  </div>
-                </div>
-              ))}
+                  {SORT_OPTIONS.map(key => (
+                    <option key={key} value={key}>{key === 'newest' ? 'Newest' : 'Most Viewed'}</option>
+                  ))}
+                </select>
+                <ChevronDown size={14} className="absolute end-2 top-1/2 -translate-y-1/2 pointer-events-none text-yt-text-muted" />
+              </div>
+
+              <div className="ms-auto flex items-center gap-1 bg-yt-bg-tertiary/50 rounded-lg p-0.5 border border-yt-border/40">
+                <button
+                  onClick={() => setListMode(false)}
+                  className={`p-1.5 rounded-md transition ${
+                    !listMode ? 'bg-yt-accent text-white shadow-sm' : 'text-yt-text-secondary hover:text-yt-text'
+                  }`}
+                  title="Grid view"
+                >
+                  <LayoutGrid size={16} />
+                </button>
+                <button
+                  onClick={() => setListMode(true)}
+                  className={`p-1.5 rounded-md transition ${
+                    listMode ? 'bg-yt-accent text-white shadow-sm' : 'text-yt-text-secondary hover:text-yt-text'
+                  }`}
+                  title="List view"
+                >
+                  <List size={16} />
+                </button>
+              </div>
             </div>
+          </div>
+
+          {processedVideos.length > 0 ? (
+            <>
+              <div className="flex items-center justify-between px-0.5">
+                <p className="text-xs text-yt-text-muted">
+                  {search
+                    ? `${processedVideos.length} of ${data.videos.length} videos`
+                    : `${processedVideos.length} videos`
+                  }
+                </p>
+              </div>
+              <div className={listMode ? 'space-y-3' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5'}>
+                {processedVideos.map(video => (
+                  <VideoCard
+                    key={video.videoId}
+                    video={video}
+                    list={listMode}
+                    ranks={{}}
+                    onPlay={(id) => setPlaying(id)}
+                    onChannelClick={onBack}
+                  />
+                ))}
+              </div>
+            </>
           ) : (
-            <div className="text-center text-yt-text-muted py-20 text-sm">No videos found.</div>
+            <div className="text-center text-yt-text-muted py-20 text-sm">
+              {search ? 'No videos match your search.' : 'No videos found.'}
+            </div>
           )}
         </>
       )}

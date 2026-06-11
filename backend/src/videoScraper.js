@@ -121,34 +121,30 @@ async function scrapeLatestVideo(handle) {
 }
 
 async function scrapeChannelVideos(handle) {
+  let channelId = '';
+  let channelName = '';
+  const entries = [];
+
   try {
     const htmlRsp = await fetch(`https://www.youtube.com/@${handle}`, {
       signal: AbortSignal.timeout(20000),
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
     });
 
-    if (!htmlRsp.ok) {
-      console.warn(`[channel] page returned ${htmlRsp.status} for @${handle}`);
-      return null;
+    if (htmlRsp.ok) {
+      const html = await htmlRsp.text();
+      const idMatch = html.match(/channel_id=(UC[\w-]+)/);
+      if (idMatch) channelId = idMatch[1];
     }
+  } catch (e) {
+    console.warn(`[channel] page fetch failed for @${handle}: ${e.message}`);
+  }
 
-    const html = await htmlRsp.text();
+  if (!channelId) return null;
 
-    const idMatch = html.match(/channel_id=(UC[\w-]+)/);
-    if (!idMatch) {
-      console.warn(`[channel] could not find channel ID for @${handle}`);
-      return null;
-    }
+  console.log(`[channel] found channel ID ${channelId} for @${handle}`);
 
-    const channelId = idMatch[1];
-    console.log(`[channel] found channel ID ${channelId} for @${handle}`);
-
-    let avatar = '';
-    const avatarMatch = html.match(/"avatar"\s*:\s*\[\s*{"url"\s*:\s*"([^"]+)"/);
-    if (avatarMatch) {
-      avatar = avatarMatch[1].replace(/\\u002F/g, '/');
-    }
-
+  try {
     const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
     const rssRsp = await fetch(rssUrl, {
       signal: AbortSignal.timeout(15000),
@@ -162,45 +158,40 @@ async function scrapeChannelVideos(handle) {
 
     const xml = await rssRsp.text();
 
-    const channelNameMatch = xml.match(/<title[^>]*>([^<]+)<\/title>/);
-    const channelName = channelNameMatch ? channelNameMatch[1].trim() : handle;
+    const nameMatch = xml.match(/<title[^>]*>([^<]+)<\/title>/);
+    if (nameMatch) channelName = nameMatch[1].trim();
 
-    const entryRegex = /<entry[^>]*>([\s\S]*?)<\/entry>/g;
-    const entries = [];
+    const entryRegex = /<entry[^>]*>([\s\S]*?)<\/entry>/gi;
     let entryMatch;
     while ((entryMatch = entryRegex.exec(xml)) !== null && entries.length < 15) {
-      const entryXml = entryMatch[1];
-      const videoIdMatch = entryXml.match(/<[^:>]*:?videoId[^>]*>([^<]+)<\/[^>]*:?videoId[^>]*>/);
-      const titleMatch = entryXml.match(/<title[^>]*>([^<]+)<\/title>/);
-      const publishedMatch = entryXml.match(/<published[^>]*>([^<]+)<\/published>/);
-      const viewsMatch = entryXml.match(/media:statistics\s+views="(\d+)"/);
-
-      const videoId = videoIdMatch ? videoIdMatch[1].trim() : '';
-      if (!videoId) continue;
-
+      const ex = entryMatch[1];
+      const vid = ex.match(/<[^:>]*:?videoId[^>]*>([^<]+)<\/[^>]*:?videoId[^>]*>/);
+      if (!vid) continue;
+      const videoId = vid[1].trim();
+      const titleM = ex.match(/<title[^>]*>([^<]+)<\/title>/);
+      const pubM = ex.match(/<published[^>]*>([^<]+)<\/published>/);
+      const viewsM = ex.match(/media:statistics\s+views="(\d+)"/i);
       entries.push({
         videoId,
-        title: titleMatch ? titleMatch[1].trim() : '',
+        title: titleM ? titleM[1].trim() : '',
         thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-        published: publishedMatch ? publishedMatch[1].trim() : '',
-        views: viewsMatch ? viewsMatch[1] : '',
+        published: pubM ? pubM[1].trim() : '',
+        views: viewsM ? viewsM[1] : '',
         videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
       });
     }
-
-    console.log(`[channel] found ${entries.length} videos for @${handle}`);
-
-    return {
-      channelId,
-      channelName,
-      channelHandle: `@${handle}`,
-      avatar,
-      videos: entries,
-    };
   } catch (e) {
-    console.warn(`[channel] error for @${handle}: ${e.message}`);
-    return null;
+    console.warn(`[channel] RSS parse failed for @${handle}: ${e.message}`);
   }
+
+  console.log(`[channel] found ${entries.length} videos for @${handle}`);
+
+  return {
+    channelId,
+    channelName: channelName || handle,
+    channelHandle: `@${handle}`,
+    videos: entries,
+  };
 }
 
 module.exports = { scrapeLatestVideo, scrapeChannelVideos };
