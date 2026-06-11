@@ -110,26 +110,19 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
         </div>
 
         {categories.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 md:gap-2 mb-4 md:mb-5">
-            {['All', ...categories].map(cat => {
-              const isActive = cat === 'All' ? !categoryFilter : categoryFilter === cat;
-              const label = cat === 'All' ? t(language, 'allCategories')
-                : cat === 'Unspecified' ? t(language, 'unspecified')
-                : cat;
-              return (
-                <button
-                  key={cat}
-                  onClick={() => setCategoryFilter(cat === 'All' ? null : cat)}
-                  className={`px-3 py-1.5 text-xs md:text-sm rounded-lg border transition ${
-                    isActive
-                      ? 'bg-yt-accent text-white border-yt-accent'
-                      : 'bg-yt-bg-tertiary/50 text-yt-text-secondary border-yt-border/40 hover:border-yt-accent/50'
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
+          <div className="mb-4 md:mb-5">
+            <select
+              value={categoryFilter || ''}
+              onChange={e => setCategoryFilter(e.target.value || null)}
+              className="w-full md:w-auto appearance-none px-3 py-2 pr-8 text-sm rounded-lg border border-yt-border/40 bg-yt-bg-tertiary/50 text-yt-text-secondary outline-none focus:ring-2 focus:ring-yt-accent cursor-pointer font-medium"
+            >
+              <option value="">{t(language, 'allCategories')}</option>
+              {categories.map(cat => (
+                <option key={cat} value={cat}>
+                  {cat === 'Unspecified' ? t(language, 'unspecified') : cat}
+                </option>
+              ))}
+            </select>
           </div>
         )}
 
@@ -163,18 +156,18 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
                 <div className="space-y-1">
                   {chs.map(ch => (
                     <div key={ch.handle}>
-                      <div className="flex items-center gap-3 px-3 py-2.5 md:py-3 rounded-lg hover:bg-yt-bg-tertiary/50 transition group">
+                      <div className="flex items-center gap-3 px-3 py-3 md:py-3 rounded-lg hover:bg-yt-bg-tertiary/50 transition group">
                         <button
                           onClick={() => onToggleFavorite(ch)}
-                          className={`p-1 rounded-lg transition flex-shrink-0 ${
-                            ch.favorite ? 'text-red-500' : 'text-transparent group-hover:text-yt-text-muted'
+                          className={`p-1.5 rounded-lg transition flex-shrink-0 ${
+                            ch.favorite ? 'text-red-500' : 'text-yt-text-muted'
                           }`}
                           title={t(language, 'favorite')}
                         >
                           <Heart size={16} fill={ch.favorite ? 'currentColor' : 'none'} />
                         </button>
 
-                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-yt-accent/20 flex items-center justify-center text-yt-accent text-xs md:text-sm flex-shrink-0 font-bold">
+                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-yt-accent/20 flex items-center justify-center text-yt-accent text-xs md:text-sm flex-shrink-0 font-bold">
                           {avatarLetter(ch)}
                         </div>
 
@@ -185,7 +178,7 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
                             </span>
                             <button
                               onClick={() => setConfirmOpen(ch)}
-                              className="text-yt-text-muted hover:text-yt-accent p-1 rounded-lg flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="text-yt-text-muted hover:text-yt-accent p-1.5 rounded-lg flex-shrink-0 transition-colors"
                               title={t(language, 'openChannel')}
                             >
                               <ExternalLink size={14} />
@@ -202,14 +195,14 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
 
                         <button
                           onClick={() => startEdit(ch)}
-                          className="text-yt-text-muted hover:text-yt-accent p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                          className="text-yt-text-muted hover:text-yt-accent p-1.5 rounded-lg transition-colors flex-shrink-0"
                           title={t(language, 'edit')}
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => setConfirmDelete(ch)}
-                          className="text-yt-text-muted hover:text-yt-accent p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                          className="text-yt-text-muted hover:text-yt-accent p-1.5 rounded-lg transition-colors flex-shrink-0"
                           title={t(language, 'remove')}
                         >
                           <Trash2 size={16} />
