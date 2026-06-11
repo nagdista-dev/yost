@@ -23,13 +23,33 @@ async function scrapeWatchPage(videoId) {
     if (!vRsp.ok) return {};
     const vHtml = await vRsp.text();
     const vcMatch = vHtml.match(/"viewCount"\s*:\s*"(\d+)"/);
-    const lcMatch = vHtml.match(/"likeCount"\s*:\s*"(\d+)"/);
     const ccMatch = vHtml.match(/"commentCount"\s*:\s*"(\d+)"/);
     const durMatch = vHtml.match(/"lengthSeconds"\s*:\s*"(\d+)"/);
     const isLiveMatch = vHtml.match(/"isLiveContent"\s*:\s*true/) || vHtml.match(/"isLive"\s*:\s*true/);
+
+    let likes = null;
+    const lcMatch = vHtml.match(/"likeCount"\s*:\s*"(\d+)"/);
+    if (lcMatch) {
+      likes = lcMatch[1];
+    } else {
+      const ytMatch = vHtml.match(/ytInitialPlayerResponse\s*=\s*({[\s\S]*?});/);
+      if (ytMatch) {
+        try {
+          const ytData = JSON.parse(ytMatch[1]);
+          if (ytData?.videoDetails?.likeCount) {
+            likes = String(ytData.videoDetails.likeCount);
+          }
+        } catch {}
+      }
+    }
+    if (!likes) {
+      const metaMatch = vHtml.match(/<meta\s+itemprop="interactionCount"[^>]*content="UserLikes:\s*(\d+)"/i);
+      if (metaMatch) likes = metaMatch[1];
+    }
+
     return {
       views: vcMatch ? vcMatch[1] : null,
-      likes: lcMatch ? lcMatch[1] : null,
+      likes,
       comments: ccMatch ? ccMatch[1] : null,
       length: durMatch ? durMatch[1] : null,
       isLive: isLiveMatch ? true : null,
@@ -46,10 +66,10 @@ async function fetchDislikes(videoId) {
     });
     if (ddRsp.ok) {
       const dd = await ddRsp.json();
-      return String(dd.dislikes || '');
+      return { dislikes: String(dd.dislikes || ''), likes: String(dd.likes || '') };
     }
   } catch (_) {}
-  return '';
+  return { dislikes: '', likes: '' };
 }
 
 async function scrapeLatestVideo(handle) {
@@ -135,7 +155,9 @@ async function scrapeLatestVideo(handle) {
       if (wp.isLive) isLive = true;
     }
 
-    dislikes = await fetchDislikes(videoId);
+    const ryd = await fetchDislikes(videoId);
+    dislikes = ryd.dislikes;
+    if (!likes && ryd.likes) likes = ryd.likes;
 
     const video = {
       videoId,
@@ -254,12 +276,13 @@ async function scrapeChannelVideos(handle) {
     );
     needsScraping.forEach((entry, i) => {
       const wp = results[i]?.value || {};
-      const dd = dislikesResults[i]?.value || '';
+      const dd = dislikesResults[i]?.value || {};
       if (!entry.views && wp.views) entry.views = wp.views;
       if (!entry.likes && wp.likes) entry.likes = wp.likes;
+      if (!entry.likes && dd.likes) entry.likes = dd.likes;
       if (!entry.comments && wp.comments) entry.comments = wp.comments;
       if (!entry.length && wp.length) entry.length = wp.length;
-      if (!entry.dislikes && dd) entry.dislikes = dd;
+      if (!entry.dislikes && dd.dislikes) entry.dislikes = dd.dislikes;
       if (wp.isLive) entry.isLive = true;
     });
   }

@@ -53,15 +53,15 @@ export default function VideoFilters({
 
         <button
           onClick={() => setLiveFilter(!liveFilter)}
-          className={`hidden md:inline-flex p-1.5 rounded-lg transition items-center gap-1.5 text-xs font-medium ${
+          className={`inline-flex p-1 md:p-1.5 rounded-lg transition items-center gap-1 md:gap-1.5 text-xs font-medium ${
             liveFilter
               ? 'bg-red-500/15 text-red-500 border border-red-500/30'
               : 'text-yt-text-secondary hover:text-yt-text border border-transparent'
           }`}
           title="Live"
         >
-          <Radio size={12} className={liveFilter ? 'animate-pulse' : ''} />
-          <span>Live</span>
+          <Radio size={11} className={liveFilter ? 'animate-pulse' : ''} />
+          <span className="hidden md:inline">Live</span>
         </button>
 
         <div className="flex items-center gap-1 bg-yt-bg-tertiary/50 rounded-lg p-0.5 border border-yt-border/40">

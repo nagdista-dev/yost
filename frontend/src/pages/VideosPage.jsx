@@ -103,7 +103,7 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
 
   return (
     <div className="space-y-4 md:space-y-5">
-      <div className="md:sticky md:top-20 md:z-30 md:bg-yt-bg-card md:rounded-xl md:border md:border-yt-border/50 md:shadow-sm">
+      <div className="sticky top-20 z-30 bg-yt-bg md:bg-yt-bg-card md:rounded-xl md:border md:border-yt-border/50 md:shadow-sm">
         <div className="px-2 md:px-5 py-1 md:pt-5 md:pb-4">
           <div className="hidden md:flex items-center gap-2 mb-3">
             <div className="w-1 h-5 rounded-full bg-yt-accent shrink-0" />
