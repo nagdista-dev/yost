@@ -1,4 +1,6 @@
 const videoCache = new Map();
+const channelVideoCache = new Map();
+const chIdCache = new Map();
 const VIDEO_CACHE_TTL_MS = 30 * 60 * 1000;
 
 async function scrapeLatestVideo(handle) {
@@ -121,36 +123,52 @@ async function scrapeLatestVideo(handle) {
 }
 
 async function scrapeChannelVideos(handle) {
+  const cacheKey = handle.toLowerCase();
+
+  // -- in-memory result cache (fresh) --
+  const cached = channelVideoCache.get(cacheKey);
+  if (cached && Date.now() - cached.fetchedAt < VIDEO_CACHE_TTL_MS) {
+    console.log(`[channel] cache fresh for @${handle}`);
+    return cached.data;
+  }
+
   let channelId = '';
   let channelName = '';
   const entries = [];
 
-  try {
-    const htmlRsp = await fetch(`https://www.youtube.com/@${handle}`, {
-      signal: AbortSignal.timeout(20000),
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-    });
-
-    if (htmlRsp.ok) {
-      const html = await htmlRsp.text();
-      const idMatch = html.match(/channel_id=(UC[\w-]+)/);
-      if (idMatch) channelId = idMatch[1];
+  // -- try to get channelId from in-memory cache first (avoid HTML scrape) --
+  const chCached = chIdCache.get(cacheKey);
+  if (chCached && chCached.channelId) {
+    channelId = chCached.channelId;
+    console.log(`[channel] using cached channelId ${channelId} for @${handle}`);
+  } else {
+    try {
+      const htmlRsp = await fetch(`https://www.youtube.com/@${handle}`, {
+        signal: AbortSignal.timeout(20000),
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      });
+      if (htmlRsp.ok) {
+        const html = await htmlRsp.text();
+        const idMatch = html.match(/channel_id=(UC[\w-]+)/);
+        if (idMatch) {
+          channelId = idMatch[1];
+          chIdCache.set(cacheKey, { channelId });
+        }
+      }
+    } catch (e) {
+      console.warn(`[channel] page fetch failed for @${handle}: ${e.message}`);
     }
-  } catch (e) {
-    console.warn(`[channel] page fetch failed for @${handle}: ${e.message}`);
+    if (!channelId) return null;
+    console.log(`[channel] found channel ID ${channelId} for @${handle}`);
   }
 
-  if (!channelId) return null;
-
-  console.log(`[channel] found channel ID ${channelId} for @${handle}`);
-
+  // -- RSS feed --
   try {
     const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
     const rssRsp = await fetch(rssUrl, {
       signal: AbortSignal.timeout(15000),
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
     });
-
     if (!rssRsp.ok) {
       console.warn(`[channel] RSS feed returned ${rssRsp.status} for @${handle}`);
       return null;
@@ -186,12 +204,15 @@ async function scrapeChannelVideos(handle) {
 
   console.log(`[channel] found ${entries.length} videos for @${handle}`);
 
-  return {
+  const result = {
     channelId,
     channelName: channelName || handle,
     channelHandle: `@${handle}`,
     videos: entries,
   };
+
+  channelVideoCache.set(cacheKey, { data: result, fetchedAt: Date.now() });
+  return result;
 }
 
 module.exports = { scrapeLatestVideo, scrapeChannelVideos };

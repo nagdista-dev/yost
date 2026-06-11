@@ -70,8 +70,25 @@ app.get('/api/channel-videos', async (req, res) => {
   if (!handle) return res.status(400).json({ error: 'Channel handle is required' });
   if (handle.startsWith('@')) handle = handle.slice(1);
 
+  const key = `ch_videos_${handle.toLowerCase()}`;
+  const cached = cache.get(key);
+
+  if (cached) {
+    const isStale = Date.now() - cached.fetchedAt > CACHE_TTL_MS;
+    console.log(`[cache] ch_videos @${handle} ${isStale ? 'stale' : 'fresh'} (${Math.floor((Date.now() - cached.fetchedAt) / 1000)}s)`);
+
+    if (isStale) {
+      scrapeChannelVideos(handle).then(data => {
+        if (data) setCache(cache, key, data);
+      });
+    }
+
+    return res.json({ ...cached.data, fromCache: true });
+  }
+
   try {
     const data = await scrapeChannelVideos(handle);
+    if (data) setCache(cache, key, data);
     res.json(data || { videos: [] });
   } catch (err) {
     console.error(`[channel-videos] failed for @${handle}:`, err.message);
