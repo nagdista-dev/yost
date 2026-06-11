@@ -100,7 +100,7 @@ export default function AddChannelModal({ show, onClose, onAdd, categories }) {
   if (!show) return null;
 
   return (
-    <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
         className="bg-yt-bg-card rounded-xl p-6 border border-yt-border w-full max-w-md mx-4 shadow-2xl"
         onClick={e => e.stopPropagation()}

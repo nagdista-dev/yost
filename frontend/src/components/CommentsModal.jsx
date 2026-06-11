@@ -7,7 +7,7 @@ export default function CommentsModal({ channelName, post, comments, loading, on
 
   return (
     <div
-      className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50"
+      className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
       onClick={onClose}
     >
       <div

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { ArrowLeft, Search, X, Edit2, Heart } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../api';
 import VideoCard from '../components/VideoCard';
 import VideoSkeleton from '../components/VideoSkeleton';
@@ -48,7 +49,10 @@ export default function ChannelPage({ channel, onUpdateChannel, onToggleFavorite
         const res = await api.get('/api/channel-videos', { params: { channelHandle } });
         if (!cancelled) setData(res.data);
       } catch {
-        if (!cancelled) setData(null);
+        if (!cancelled) {
+          setData(null);
+          toast.error(t(language, 'fetchChannelVideosError'));
+        }
       }
       if (!cancelled) setLoading(false);
     }
@@ -293,7 +297,7 @@ export default function ChannelPage({ channel, onUpdateChannel, onToggleFavorite
       )}
 
       {editing && (
-        <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50" onClick={() => setEditing(null)}>
+        <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setEditing(null)}>
           <div
             className="bg-yt-bg-card rounded-xl p-6 border border-yt-border w-full max-w-sm mx-4 shadow-2xl"
             onClick={e => e.stopPropagation()}

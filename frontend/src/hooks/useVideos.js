@@ -1,5 +1,8 @@
 import { useEffect, useState, useMemo } from 'react';
+import toast from 'react-hot-toast';
 import api from '../api';
+import { useTheme } from '../context/useTheme';
+import { t } from '../i18n';
 
 function isLikelyLive(title) {
   if (!title) return false;
@@ -7,6 +10,7 @@ function isLikelyLive(title) {
 }
 
 export default function useVideos(channels, refreshTrigger = 0) {
+  const { language } = useTheme();
   const [videos, setVideos] = useState({});
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState({ loaded: 0, total: 0 });
@@ -29,6 +33,7 @@ export default function useVideos(channels, refreshTrigger = 0) {
       setLoading(true);
       setProgress({ loaded: 0, total: channels.length });
       const results = {};
+      let failed = 0;
 
       const promises = channels.map(async (ch) => {
         const handle = typeof ch === 'string' ? ch : ch.handle;
@@ -42,13 +47,19 @@ export default function useVideos(channels, refreshTrigger = 0) {
               _channelCategories: ch.categories || ['Unspecified'],
             };
           }
-        } catch {}
+        } catch {
+          failed++;
+        }
         if (!cancelled) {
           setProgress(prev => ({ ...prev, loaded: prev.loaded + 1 }));
         }
       });
 
       await Promise.allSettled(promises);
+
+      if (failed > 0 && !cancelled) {
+        toast.error(t(language, 'fetchVideosError'));
+      }
 
       if (!cancelled) {
         setVideos(results);

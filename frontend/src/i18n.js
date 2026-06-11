@@ -133,6 +133,8 @@ const translations = {
     listView: 'List view',
     clearFilters: 'Clear filters',
     refreshVideos: 'Refresh',
+    fetchVideosError: 'Failed to load videos.',
+    fetchChannelVideosError: 'Failed to load channel videos.',
   },
   ar: {
     appTitle: 'آخر المنشورات',
@@ -275,6 +277,8 @@ const translations = {
     listView: 'عرض قائمة',
     clearFilters: 'مسح التصفية',
     refreshVideos: 'تحديث',
+    fetchVideosError: 'فشل تحميل الفيديوهات.',
+    fetchChannelVideosError: 'فشل تحميل فيديوهات القناة.',
   },
 };
 

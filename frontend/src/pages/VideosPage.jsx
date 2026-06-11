@@ -178,7 +178,7 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
       )}
 
       {editing && (
-        <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50" onClick={() => setEditing(null)}>
+        <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setEditing(null)}>
           <div
             className="bg-yt-bg-card rounded-xl p-6 border border-yt-border w-full max-w-sm mx-4 shadow-2xl"
             onClick={e => e.stopPropagation()}
