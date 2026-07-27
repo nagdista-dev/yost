@@ -1,52 +1,58 @@
-# Yost - Local YouTube Posts Dashboard
+# Yost — Local YouTube Posts Dashboard
 
-Yost is a locally-hosted dashboard that allows you to cleanly view the latest community posts from your favorite YouTube channels in one place.
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=white" alt="React" />
+  <img src="https://img.shields.io/badge/Express-5-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" />
+  <img src="https://img.shields.io/badge/Puppeteer-404E49?style=for-the-badge&logo=puppeteer&logoColor=white" alt="Puppeteer" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License" />
+</p>
 
-## Architecture
+No videos. No algorithm. Just posts. Yost pulls community posts from your favorite YouTube channels into one clean, unified feed — so you never miss what your favorite creators are saying.
 
-Yost is split into two distinct parts:
+## Features
 
-1. **Frontend:** A React application built with Vite and Tailwind CSS.
-2. **Backend:** A Node.js Express server that uses Puppeteer (with Stealth plugin) to scrape the YouTube Community tabs.
+- Scrape YouTube community posts from multiple channels
+- Clean, unified feed of all posts
+- No video content — posts only
+- Local-first design, runs on your machine
+- Search and filter posts
 
-## Prerequisites
+## Tech Stack
 
-- Node.js (v18+ recommended)
-- Chromium or Google Chrome (Puppeteer will automatically download a compatible version of Chromium, but you need standard OS dependencies to run it)
+| Layer | Technology |
+|-------|------------|
+| Frontend | React 19, Vite, Tailwind CSS |
+| Backend | Node.js, Express |
+| Scraping | Puppeteer with Stealth plugin |
 
 ## Getting Started
 
-Because Yost is designed to run locally, we use `concurrently` to spin up both the backend and frontend simultaneously with a single command from the root directory.
+### Prerequisites
 
-### 1. Install Dependencies
+- Node.js v18+
+- Chromium or Google Chrome
 
-First, install the dependencies for the root, frontend, and backend folders:
+### Installation
 
 ```bash
+git clone https://github.com/nagdista-dev/yost.git
+cd yost
 npm run install:all
 ```
 
-*This command will run `npm install` in the root directory, `frontend`, and `backend` respectively.*
-
-### 2. Run the Application
-
-To start the application locally, run the following command from the root directory:
+### Run
 
 ```bash
 npm run dev
 ```
 
-This single command will:
-- Start the Vite development server for the frontend (typically on `http://localhost:5173`)
-- Start the Express backend on port `3000`
+This starts both the frontend (port 5173) and backend concurrently.
 
-### 3. Usage
+## Contributing
 
-1. Navigate to the frontend URL provided in your terminal (usually `http://localhost:5173`).
-2. Click **Add Channel** to add a new YouTube handle (e.g., `@MKBHD` or `@MrBeast`).
-3. The backend will use headless Chrome to visit the channel's `/community` tab and extract recent posts.
-4. Posts will display in a clean, ad-free UI. You can also organize channels into categories, export/import your feeds, and switch between Light/Dark/OLED modes!
+Contributions are welcome! Please open an issue or submit a pull request.
 
-## Why Local?
+## License
 
-Yost relies on scraping YouTube via Headless Chrome (`puppeteer`). Web scraping tools of this scale often hit CAPTCHAs, bot protections, or IP blocks when hosted on cloud servers (like Vercel, Render, AWS, etc.). Running it locally from your own IP address heavily mitigates these issues and is perfectly suited for a private feed dashboard!
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
