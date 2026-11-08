@@ -64,6 +64,15 @@ export default function SidebarFooter({ onAdd, closeMobile, hideAddButton }) {
           />
         )}
       </div>
+
+      <a
+        href="https://nagdista.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block px-3 pb-3 text-center text-[11px] text-gray-500 transition-colors hover:text-yt-accent"
+      >
+        {language === 'ar' ? 'صنع بواسطة محمود النجدي' : 'Built by Mahmoud Elnagdy'}
+      </a>
     </div>
   );
 }
